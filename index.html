@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>LOI Correction Factor Preview</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e8741e'/%3E%3Cpath d='M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z' fill='%23fff3e0'/%3E%3Cpath d='M14 38h36l-5 17H19z' fill='%23fff' /%3E%3Cpath d='M18 44h28' stroke='%23e8741e' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23e8741e'/%3E%3Cpath d='M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z' fill='%23fff3e0'/%3E%3Cpath d='M14 38h36l-5 17H19z' fill='%23fff'/%3E%3Cpath d='M18 44h28' stroke='%23e8741e' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f6f7; --panel:#ffffff; --ink:#1b2127; --muted:#5d6770; --line:#dde1e5; --soft:#eef0f2;
+  --h1:#f2b544; --h2:#ec8a2a; --h3:#dc5f1c; --h4:#b83a14; --brand:#e8741e;
+  --up:#b83a14; --down:#2f6f9f; --warnbg:#fff4e5; --warnink:#8a4b08;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181c; --panel:#1c2126; --ink:#e7eaed; --muted:#9aa4ad; --line:#2d343b; --soft:#232a30;
+    --up:#f08a5d; --down:#7fb6e0; --warnbg:#3a2a14; --warnink:#f5c98a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181c; --panel:#1c2126; --ink:#e7eaed; --muted:#9aa4ad; --line:#2d343b; --soft:#232a30;
+  --up:#f08a5d; --down:#7fb6e0; --warnbg:#3a2a14; --warnink:#f5c98a;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 20px 48px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+header svg{flex:none}
+h1{font-size:22px;line-height:1.2;margin:0;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13.5px;margin:2px 0 0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:18px}
+h2{font-size:15px;margin:0 0 10px;font-weight:600}
+textarea{width:100%;min-height:120px;resize:vertical;border:1px solid var(--line);border-radius:8px;
+  background:var(--soft);color:var(--ink);padding:10px;font:13px/1.4 Consolas,"SF Mono",Menlo,monospace}
+button{font:inherit;font-size:14px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:7px 13px;cursor:pointer}
+button:hover{border-color:var(--brand)}
+button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+button.primary:hover{filter:brightness(1.07)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:space-between}
+.muted{color:var(--muted);font-size:13px}
+.err{color:var(--up);font-size:13.5px;margin-top:8px}
+.warn{background:var(--warnbg);color:var(--warnink);border-radius:8px;padding:8px 12px;font-size:13.5px;margin-top:10px}
+.hidden{display:none!important}
+
+/* CF furnace strip */
+.heat{height:6px;border-radius:3px;margin:4px 0 14px;
+  background:linear-gradient(90deg,var(--h1),var(--h2) 38%,var(--h3) 68%,var(--h4))}
+.stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.stage{border:1px solid var(--line);border-radius:9px;padding:12px;background:var(--panel);position:relative}
+.stage::before{content:"";position:absolute;left:-1px;right:-1px;top:-1px;height:4px;border-radius:9px 9px 0 0;background:var(--c)}
+.stage .t{font-size:24px;font-weight:700;line-height:1.1}
+.stage .t small{font-size:14px;font-weight:500;color:var(--muted)}
+.stage label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 4px}
+.stepper{display:flex;align-items:stretch}
+.stepper button{padding:0 11px;font-size:18px;line-height:1;border-radius:0}
+.stepper button:first-child{border-radius:7px 0 0 7px}
+.stepper button:last-child{border-radius:0 7px 7px 0}
+.stepper input{width:100%;min-width:0;text-align:center;border:1px solid var(--line);border-left:0;border-right:0;
+  background:var(--panel);color:var(--ink);font:600 17px "IBM Plex Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums;padding:6px 4px}
+.stage.changed .stepper input{color:var(--brand)}
+.stage .meta{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.45}
+.stage .meta b{color:var(--ink);font-weight:600}
+.stage .reset{font-size:12px;padding:2px 8px;margin-top:6px}
+.stage:not(.changed) .reset{visibility:hidden}
+
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:9px}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:14px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top;white-space:nowrap}
+th{position:sticky;top:0;background:var(--soft);font-weight:600;font-size:13px}
+th.l,td.l{text-align:left}
+th .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:0}
+tbody tr:last-child td{border-bottom:0}
+tr.avg td{background:var(--soft);font-weight:600}
+tr.empty td{color:var(--muted)}
+td .was{display:block;font-size:11.5px;color:var(--muted);font-weight:400}
+td .d.up{color:var(--up)} td .d.down{color:var(--down)}
+.type{display:inline-block;font-size:11.5px;padding:1px 6px;border-radius:4px;background:var(--soft);border:1px solid var(--line);font-weight:500}
+.type.STD{border-color:var(--h2)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);
+  padding:8px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.chk{display:flex;gap:6px;align-items:center;font-size:13.5px;color:var(--muted)}
+footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
+@media (max-width:760px){.stages{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#e8741e"/><path d="M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z" fill="#fff3e0"/><path d="M14 38h36l-5 17H19z" fill="#fff"/><path d="M18 44h28" stroke="#e8741e" stroke-width="3"/></svg>
+  <div>
+    <h1>LOI correction factor preview</h1>
+    <p class="sub">Paste the LOI tab from CCLAS, adjust the crucible correction factors, and see how each LOI result moves.</p>
+  </div>
+</header>
+
+<section class="panel" id="pastePanel">
+  <h2>Paste LOI data</h2>
+  <textarea id="paste" placeholder="Copy the LOI rows from Excel (header row optional) and paste here" spellcheck="false"></textarea>
+  <div class="row" style="margin-top:10px">
+    <button class="primary" id="loadBtn">Load data</button>
+    <button id="exampleBtn">Load example (35280 JMBF)</button>
+    <span class="muted">Expected columns: IDENT … WT105_IN–WT1000_OUT, CF105–CF1000, LOI105–LOI1000</span>
+  </div>
+  <div class="err" id="err"></div>
+</section>
+
+<section class="panel hidden" id="loadedPanel">
+  <div class="row end">
+    <span id="loadedInfo"></span>
+    <button id="repasteBtn">Paste new data</button>
+  </div>
+  <div id="cfWarn" class="warn hidden"></div>
+</section>
+
+<section class="panel hidden" id="cfPanel">
+  <div class="row end">
+    <h2 style="margin:0">Correction factors (g)</h2>
+    <button id="resetAll">Reset all to pasted values</button>
+  </div>
+  <div class="heat" aria-hidden="true"></div>
+  <div class="stages" id="stages"></div>
+</section>
+
+<section class="panel hidden" id="resultsPanel">
+  <div class="row end" style="margin-bottom:10px">
+    <h2 style="margin:0">Results preview (% LOI)</h2>
+    <div class="row">
+      <label class="chk"><input type="checkbox" id="showEmpty"> Show rows without weights</label>
+      <button class="primary" id="copyBtn">Copy results</button>
+    </div>
+  </div>
+  <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+  <footer>
+    Each cell shows the recalculated LOI. When it differs from the pasted value, the original and the change are shown underneath.
+    AVG rows are the mean of the matching DUP rows. Copy results gives the full 26-column LOI layout, with the new CF and LOI values, ready to paste into Excel.<br>
+    LOI105 = 100 × (WT105_IN − WT105_OUT − CF105) ÷ M, where M = SW × WT105_IN ÷ (SW + CW).
+    LOI425/650/1000 = 100 × (WT105_OUT − WT<sub>t</sub>_OUT − CF<sub>t</sub>) ÷ M × 100 ÷ (100 − LOI105).
+  </footer>
+</section>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+const EXAMPLE = "\t\tIDENT\tEXT ID\tREPORT\tNS\tW2\tSAMPLE WEIGHT\tCRUCIBLE WEIGHT\tCRUC_NO\tWT105_IN\tWT105_OUT\tWT425_IN\tWT425_OUT\tWT650_IN\tWT650_OUT\tWT1000_IN\tWT1000_OUT\tCF105\tCF425\tCF650\tCF1000\tLOI105\tLOI425\tLOI650\tLOI1000\n1329937\tUNK\t35280 JMBF CARGO\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329939\tSTD\tASCRM34\t26073628\t\t\t\t1.983\t21.46821\t3\t23.4536\t23.4377\t23.445\t23.3617\t23.445\t23.3505\t23.3528\t23.3462\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.7059290647174229\t3.935604182049949\t4.534831657510391\t4.7379596152936445\n1329941\tUNK\tA 35280 JMBF CARGO\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329942\tUNK\tB 35280 JMBF CARGO\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329943\tUNK\tC 35280 JMBF CARGO\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329944\tUNK\tD 35280 JMBF CARGO\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329945\tUNK\t35280 JMBF A\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329946\tUNK\t35280 JMBF B\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329947\tUNK\t35280 JMBF A1 AVG\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329948\tDUP\t35280 JMBF A1 DUP A\t26073628\t\t\t\t1.9846\t21.46079\t3\t23.449\t23.4381\t23.4452\t23.3621\t23.4452\t23.347\t23.3492\t23.3427\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.4534\t3.9223\t4.7168\t4.9193\n1329949\tDUP\t35280 JMBF A1 DUP B\t26073628\t\t\t\t1.9821\t21.31979\t1\t23.3055\t23.294\t23.3013\t23.2183\t23.3013\t23.2033\t23.2056\t23.198\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.4843\t3.9132\t4.704\t4.9574\n1329950\tUNK\t35280 JMBF A2 AVG\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329951\tDUP\t35280 JMBF A2 DUP A\t26073628\t\t\t\t1.9819\t21.4521\t3\t23.4371\t23.4255\t23.4327\t23.3498\t23.4327\t23.3341\t23.3365\t23.3293\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.4894\t3.9139\t4.7403\t4.9684\n1329952\tDUP\t35280 JMBF A2 DUP B\t26073628\t\t\t\t1.9827\t21.1581\t1\t23.1455\t23.1337\t23.1409\t23.0571\t23.1409\t23.0417\t23.0446\t23.0376\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.4992\t3.958\t4.7689\t4.9615\n1329953\tUNK\t35280 JMBF B1 AVG\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329954\tDUP\t35280 JMBF B1 DUP A\t26073628\t\t\t\t1.9828\t21.0033\t1\t22.9937\t22.9819\t22.9895\t22.9059\t22.9895\t22.8908\t22.8933\t22.8855\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.4991\t3.9269\t4.7224\t4.9758\n1329955\tDUP\t35280 JMBF B1 DUP B\t26073628\t\t\t\t1.9835\t21.3257\t3\t23.3016\t23.2896\t23.2971\t23.2141\t23.2971\t23.1983\t23.2005\t23.1938\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.5094\t3.9032\t4.7345\t4.9474\n1329956\tUNK\t35280 JMBF B2 AVG\t26073628\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n1329957\tDUP\t35280 JMBF B2 DUP A\t26073628\t\t\t\t1.9812\t21.2202\t1\t23.1997\t23.1881\t23.1945\t23.111\t23.1945\t23.0958\t23.0983\t23.0905\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.4896\t3.9871\t4.7886\t5.0422\n1329958\tDUP\t35280 JMBF B2 DUP B\t26073628\t\t\t\t1.9824\t21.30299\t3\t23.2855\t23.2739\t23.2809\t23.1971\t23.2809\t23.1822\t23.1847\t23.1773\t0.0019\t-0.0015\t-0.0021\t-0.0018\t0.4893\t3.9692\t4.7549\t4.9881";
+const COLS=['LABID','TYPE','IDENT','EXT ID','REPORT','NS','W2','SAMPLE WEIGHT','CRUCIBLE WEIGHT','CRUC_NO',
+ 'WT105_IN','WT105_OUT','WT425_IN','WT425_OUT','WT650_IN','WT650_OUT','WT1000_IN','WT1000_OUT',
+ 'CF105','CF425','CF650','CF1000','LOI105','LOI425','LOI650','LOI1000'];
+const STAGES=[{t:105,c:'var(--h1)'},{t:425,c:'var(--h2)'},{t:650,c:'var(--h3)'},{t:1000,c:'var(--h4)'}];
+const CF_KEYS=['CF105','CF425','CF650','CF1000'], LOI_KEYS=['LOI105','LOI425','LOI650','LOI1000'];
+const OUT_KEYS=['WT105_OUT','WT425_OUT','WT650_OUT','WT1000_OUT'];
+const STEP=0.0001;
+const $=id=>document.getElementById(id);
+
+let rows=[], cfOrig=[0,0,0,0], cf=[0,0,0,0];
+
+const num=s=>{ if(s==null) return NaN; s=String(s).trim().replace(/,/g,''); if(s==='') return NaN; const v=Number(s); return Number.isFinite(v)?v:NaN; };
+const ok=Number.isFinite;
+const r4=v=>Math.round(v*1e4)/1e4;
+const fmt=v=>ok(v)?v.toFixed(4):'';
+const norm=s=>String(s||'').trim().replace(/\s+/g,' ').toUpperCase();
+
+function parse(text){
+  const lines=text.replace(/\r/g,'').split('\n').map(l=>l.split('\t'));
+  const hi=lines.findIndex(c=>c.some(x=>x.trim().toUpperCase()==='CF105'));
+  const map={}; let data;
+  if(hi>=0){
+    const h=lines[hi].map(x=>x.trim().toUpperCase());
+    COLS.forEach(n=>{const i=h.indexOf(n); if(i>=0) map[n]=i;});
+    if(map.IDENT!==undefined){ if(map.LABID===undefined&&map.IDENT>=2) map.LABID=map.IDENT-2; if(map.TYPE===undefined&&map.IDENT>=1) map.TYPE=map.IDENT-1; }
+    data=lines.slice(hi+1);
+  } else { COLS.forEach((n,i)=>map[n]=i); data=lines; }
+  const need=['SAMPLE WEIGHT','CRUCIBLE WEIGHT','WT105_IN','WT105_OUT','WT425_OUT','WT650_OUT','WT1000_OUT'];
+  const miss=need.filter(n=>map[n]===undefined);
+  if(miss.length) throw new Error('Missing column(s): '+miss.join(', ')+'. Include the header row from the LOI tab, or paste all 26 columns in the LOI tab order.');
+  const get=(c,n)=>map[n]===undefined?'':(c[map[n]]??'').trim();
+  const out=data.filter(c=>c.some(x=>x.trim()!=='')).map(c=>{
+    const cells={}; COLS.forEach(n=>cells[n]=get(c,n));
+    const n={}; COLS.forEach(k=>n[k]=num(cells[k]));
+    return {cells,n,ident:cells.IDENT,type:cells.TYPE,labid:cells.LABID};
+  });
+  if(!out.length) throw new Error('No data rows found below the header.');
+  return out;
+}
+
+function calc(r,c){
+  const H=r.n['SAMPLE WEIGHT'],I=r.n['CRUCIBLE WEIGHT'],K=r.n.WT105_IN,L=r.n.WT105_OUT;
+  if(![H,I,K,L].every(ok)||H+I===0) return null;
+  const M=H*K/(H+I); if(!M) return null;
+  const a=100*(K-L-c[0])/M, f=100/(100-a);
+  const g=(o,x)=>ok(o)?100*(L-o-x)/M*f:NaN;
+  return {M,loi:[a,g(r.n.WT425_OUT,c[1]),g(r.n.WT650_OUT,c[2]),g(r.n.WT1000_OUT,c[3])]};
+}
+
+const isAvg=r=>/\bAVG$/i.test(norm(r.ident));
+function dupsFor(r){
+  const base=norm(r.ident).replace(/\s*AVG$/,'');
+  return rows.filter(x=>x!==r && norm(x.ident).startsWith(base+' DUP'));
+}
+const mean=a=>{const v=a.filter(ok); return v.length?v.reduce((s,x)=>s+x,0)/v.length:NaN;};
+
+function results(){
+  // computes new + original LOI per row
+  const res=new Map();
+  rows.forEach(r=>{ if(isAvg(r)) return;
+    const k=calc(r,cf);
+    res.set(r,{nw:k?k.loi:[NaN,NaN,NaN,NaN], orig:LOI_KEYS.map(x=>r.n[x]), M:k?k.M:NaN, has:!!k});
+  });
+  rows.forEach(r=>{ if(!isAvg(r)) return;
+    const d=dupsFor(r).map(x=>res.get(x)).filter(x=>x&&x.has);
+    res.set(r,{avg:true,dupN:d.length,has:d.length>0,
+      nw:[0,1,2,3].map(i=>mean(d.map(x=>r4(x.nw[i])))),
+      orig:[0,1,2,3].map(i=>mean(d.map(x=>r4(x.orig[i])))), M:NaN});
+  });
+  return res;
+}
+
+function buildStages(){
+  $('stages').innerHTML=STAGES.map((s,i)=>`
+    <div class="stage" id="st${i}" style="--c:${s.c}">
+      <div class="t">${s.t}<small> °C</small></div>
+      <label for="cf${i}">${CF_KEYS[i]}</label>
+      <div class="stepper">
+        <button type="button" data-i="${i}" data-d="-1" aria-label="Decrease ${CF_KEYS[i]} by 0.0001">−</button>
+        <input id="cf${i}" inputmode="decimal" value="${cf[i].toFixed(4)}" autocomplete="off">
+        <button type="button" data-i="${i}" data-d="1" aria-label="Increase ${CF_KEYS[i]} by 0.0001">+</button>
+      </div>
+      <div class="meta" id="meta${i}"></div>
+      <button class="reset" data-reset="${i}">Reset to ${cfOrig[i].toFixed(4)}</button>
+    </div>`).join('');
+  $('stages').querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i; setCf(i, r4(cf[i]+ +b.dataset.d*STEP)); $('cf'+i).value=cf[i].toFixed(4);
+  });
+  $('stages').querySelectorAll('[data-reset]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.reset; setCf(i,cfOrig[i]); $('cf'+i).value=cf[i].toFixed(4);
+  });
+  for(let i=0;i<4;i++){
+    const inp=$('cf'+i);
+    inp.addEventListener('input',()=>{const v=num(inp.value); if(ok(v)) setCf(i,v);});
+    inp.addEventListener('blur',()=>{inp.value=cf[i].toFixed(4);});
+    inp.addEventListener('keydown',e=>{
+      if(e.key==='ArrowUp'||e.key==='ArrowDown'){e.preventDefault();
+        setCf(i,r4(cf[i]+(e.key==='ArrowUp'?1:-1)*STEP*(e.shiftKey?10:1))); inp.value=cf[i].toFixed(4);}
+    });
+  }
+}
+function setCf(i,v){ cf[i]=v; render(); }
+
+function render(){
+  const res=results();
+  const base=rows.filter(r=>!isAvg(r)&&res.get(r).has);
+  const Mbar=mean(base.map(r=>res.get(r).M));
+  const f=mean(base.map(r=>100/(100-res.get(r).nw[0])));
+  for(let i=0;i<4;i++){
+    const st=$('st'+i); st.classList.toggle('changed',Math.abs(cf[i]-cfOrig[i])>1e-9);
+    const ds=base.map(r=>{const x=res.get(r);return x.nw[i]-x.orig[i];}).filter(ok);
+    const md=mean(ds);
+    const sens=ok(Mbar)?100*STEP/Mbar*(i?f:1):NaN;
+    $('meta'+i).innerHTML=`Pasted value <b>${cfOrig[i].toFixed(4)}</b><br>
+      Mean change <b>${ok(md)?(md>=0?'+':'−')+Math.abs(md).toFixed(4):'n/a'}</b><br>
+      +0.0001 g moves LOI by about −${ok(sens)?sens.toFixed(4):'n/a'}`;
+  }
+  const showEmpty=$('showEmpty').checked;
+  const th=`<tr><th class="l">Lab ID</th><th class="l">Type</th><th class="l">Ident</th>`+
+    STAGES.map((s,i)=>`<th><span class="sw" style="background:${s.c}"></span>LOI${s.t}</th>`).join('')+`</tr>`;
+  $('tbl').querySelector('thead').innerHTML=th;
+  const body=rows.map(r=>{
+    const x=res.get(r); if(!x.has&&!showEmpty) return '';
+    const cls=x.avg?'avg':(x.has?'':'empty');
+    const cells=[0,1,2,3].map(i=>{
+      const nv=x.nw[i], ov=x.orig[i];
+      if(!ok(nv)) return `<td>${x.avg&&!x.has?'<span class="muted">no DUPs</span>':''}</td>`;
+      let sub='';
+      if(ok(ov)&&nv.toFixed(4)!==ov.toFixed(4)){const d=Number(nv.toFixed(4))-Number(ov.toFixed(4));
+        if(true) sub=`<span class="was">was ${ov.toFixed(4)} <span class="d ${d>0?'up':'down'}">${d>0?'+':'−'}${Math.abs(d).toFixed(4)}</span></span>`;}
+      return `<td>${nv.toFixed(4)}${sub}</td>`;
+    }).join('');
+    const t=esc(r.type);
+    return `<tr class="${cls}"><td class="l">${esc(r.labid)}</td><td class="l">${t?`<span class="type ${t}">${t}</span>`:''}</td><td class="l">${esc(r.ident)}${x.avg&&x.has?` <span class="muted">(${x.dupN} DUP)</span>`:''}</td>${cells}</tr>`;
+  }).join('');
+  $('tbl').querySelector('tbody').innerHTML=body||`<tr><td class="l muted" colspan="7">No rows with weights. Tick "Show rows without weights" to see all rows.</td></tr>`;
+  lastRes=res;
+}
+let lastRes=null;
+const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function load(text){
+  $('err').textContent='';
+  try{ rows=parse(text); }catch(e){ $('err').textContent=e.message; return; }
+  const src=rows.find(r=>CF_KEYS.every(k=>ok(r.n[k])));
+  cfOrig=src?CF_KEYS.map(k=>r4(src.n[k])):[0,0,0,0];
+  cf=cfOrig.slice();
+  const diff=rows.filter(r=>CF_KEYS.some((k,i)=>ok(r.n[k])&&Math.abs(r.n[k]-cfOrig[i])>1e-9)).length;
+  $('cfWarn').classList.toggle('hidden',!diff);
+  $('cfWarn').textContent=diff?`${diff} row(s) were pasted with different CF values from the first row. The preview applies one CF per column to every row, so those rows will show a change even before you adjust anything.`:'';
+  if(!src){ $('cfWarn').classList.remove('hidden'); $('cfWarn').textContent='No CF values found in the pasted data, so all four start at 0.0000.'; }
+  const nW=rows.filter(r=>!isAvg(r)&&calc(r,cf)).length;
+  $('loadedInfo').innerHTML=`<b>${rows.length}</b> rows loaded, <b>${nW}</b> with weights, <b>${rows.filter(isAvg).length}</b> AVG rows`;
+  ['pastePanel'].forEach(id=>$(id).classList.add('hidden'));
+  ['loadedPanel','cfPanel','resultsPanel'].forEach(id=>$(id).classList.remove('hidden'));
+  buildStages(); render();
+}
+
+function toTSV(){
+  const hdr=COLS.map((c,i)=>i<2?'':c).join('\t');
+  const lines=rows.map(r=>{
+    const x=lastRes.get(r);
+    return COLS.map(k=>{
+      const ci=CF_KEYS.indexOf(k), li=LOI_KEYS.indexOf(k);
+      if(ci>=0) return x.has?cf[ci].toFixed(4):r.cells[k];
+      if(li>=0) return x.has&&ok(x.nw[li])?x.nw[li].toFixed(4):'';
+      return r.cells[k];
+    }).join('\t');
+  });
+  return [hdr,...lines].join('\n');
+}
+async function copy(text){
+  try{ await navigator.clipboard.writeText(text); return true; }catch(e){
+    const t=document.createElement('textarea'); t.value=text; t.style.position='fixed'; t.style.opacity='0';
+    document.body.appendChild(t); t.select(); let r=false; try{r=document.execCommand('copy');}catch(_){}
+    t.remove(); return r;
+  }
+}
+let tt; function toast(m){const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),2200);}
+
+$('loadBtn').onclick=()=>load($('paste').value);
+$('exampleBtn').onclick=()=>{ $('paste').value=EXAMPLE; load(EXAMPLE); };
+$('paste').addEventListener('paste',()=>setTimeout(()=>load($('paste').value),0));
+$('repasteBtn').onclick=()=>{ $('pastePanel').classList.remove('hidden'); ['loadedPanel','cfPanel','resultsPanel'].forEach(id=>$(id).classList.add('hidden')); $('paste').value=''; $('paste').focus(); };
+$('resetAll').onclick=()=>{ cf=cfOrig.slice(); for(let i=0;i<4;i++) $('cf'+i).value=cf[i].toFixed(4); render(); };
+$('showEmpty').onchange=render;
+$('copyBtn').onclick=async()=>toast(await copy(toTSV())?'Copied results, with header row, ready to paste into Excel':'Copy blocked by the browser. Select the table and copy manually.');
+})();
+</script>
+</body>
+</html>
