@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LOI Correction Factor Preview</title>
+<title>LOI Correction Factor Preview v2</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e8741e'/%3E%3Cpath d='M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z' fill='%23fff3e0'/%3E%3Cpath d='M14 38h36l-5 17H19z' fill='%23fff' /%3E%3Cpath d='M18 44h28' stroke='%23e8741e' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23e8741e'/%3E%3Cpath d='M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z' fill='%23fff3e0'/%3E%3Cpath d='M14 38h36l-5 17H19z' fill='%23fff'/%3E%3Cpath d='M18 44h28' stroke='%23e8741e' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,6 +36,8 @@ body{margin:0;background:var(--bg);color:var(--ink);
 header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
 header svg{flex:none}
 h1{font-size:22px;line-height:1.2;margin:0;font-weight:700;letter-spacing:-.01em}
+.ver{font-size:12px;font-weight:600;color:var(--brand);border:1px solid var(--brand);border-radius:4px;padding:1px 6px;vertical-align:3px}
+.vfoot{margin-top:10px;font-size:12px;color:var(--muted)}
 .sub{color:var(--muted);font-size:13.5px;margin:2px 0 0}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:18px}
 h2{font-size:15px;margin:0 0 10px;font-weight:600}
@@ -77,7 +79,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 
 /* table */
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:9px}
-table{border-collapse:collapse;width:100%;min-width:820px;font-size:14px}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:14px}
 th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top;white-space:nowrap}
 th{position:sticky;top:0;background:var(--soft);font-weight:600;font-size:13px}
 th.l,td.l{text-align:left}
@@ -103,7 +105,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
 <header>
   <svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#e8741e"/><path d="M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z" fill="#fff3e0"/><path d="M14 38h36l-5 17H19z" fill="#fff"/><path d="M18 44h28" stroke="#e8741e" stroke-width="3"/></svg>
   <div>
-    <h1>LOI correction factor preview</h1>
+    <h1>LOI correction factor preview <span class="ver">v2</span></h1>
     <p class="sub">Paste the LOI tab from CCLAS, adjust the crucible correction factors, and see how each LOI result moves.</p>
   </div>
 </header>
@@ -152,6 +154,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
     LOI425/650/1000 = 100 × (WT105_OUT − WT<sub>t</sub>_OUT − CF<sub>t</sub>) ÷ M × 100 ÷ (100 − LOI105).
   </footer>
 </section>
+<div class="vfoot">LOI correction factor preview v2</div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -276,7 +279,7 @@ function render(){
       +0.0001 g moves LOI by about −${ok(sens)?sens.toFixed(4):'n/a'}`;
   }
   const showEmpty=$('showEmpty').checked;
-  const th=`<tr><th class="l">Lab ID</th><th class="l">Type</th><th class="l">Ident</th>`+
+  const th=`<tr><th class="l">Type</th><th class="l">Ident</th>`+
     STAGES.map((s,i)=>`<th><span class="sw" style="background:${s.c}"></span>LOI${s.t}</th>`).join('')+`</tr>`;
   $('tbl').querySelector('thead').innerHTML=th;
   const body=rows.map(r=>{
@@ -291,9 +294,9 @@ function render(){
       return `<td>${nv.toFixed(4)}${sub}</td>`;
     }).join('');
     const t=esc(r.type);
-    return `<tr class="${cls}"><td class="l">${esc(r.labid)}</td><td class="l">${t?`<span class="type ${t}">${t}</span>`:''}</td><td class="l">${esc(r.ident)}${x.avg&&x.has?` <span class="muted">(${x.dupN} DUP)</span>`:''}</td>${cells}</tr>`;
+    return `<tr class="${cls}"><td class="l">${t?`<span class="type ${t}">${t}</span>`:''}</td><td class="l">${esc(r.ident)}${x.avg&&x.has?` <span class="muted">(${x.dupN} DUP)</span>`:''}</td>${cells}</tr>`;
   }).join('');
-  $('tbl').querySelector('tbody').innerHTML=body||`<tr><td class="l muted" colspan="7">No rows with weights. Tick "Show rows without weights" to see all rows.</td></tr>`;
+  $('tbl').querySelector('tbody').innerHTML=body||`<tr><td class="l muted" colspan="6">No rows with weights. Tick "Show rows without weights" to see all rows.</td></tr>`;
   lastRes=res;
 }
 let lastRes=null;
