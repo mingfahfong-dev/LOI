@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LOI Correction Factor Preview v2</title>
+<title>LOI Correction Factor Preview v3</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e8741e'/%3E%3Cpath d='M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z' fill='%23fff3e0'/%3E%3Cpath d='M14 38h36l-5 17H19z' fill='%23fff' /%3E%3Cpath d='M18 44h28' stroke='%23e8741e' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23e8741e'/%3E%3Cpath d='M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z' fill='%23fff3e0'/%3E%3Cpath d='M14 38h36l-5 17H19z' fill='%23fff'/%3E%3Cpath d='M18 44h28' stroke='%23e8741e' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -89,6 +89,11 @@ tr.avg td{background:var(--soft);font-weight:600}
 tr.empty td{color:var(--muted)}
 td .was{display:block;font-size:11.5px;color:var(--muted);font-weight:400}
 td .d.up{color:var(--up)} td .d.down{color:var(--down)}
+tr.hasexp td{border-bottom:0}
+tr.exp td{font-size:12.5px;color:var(--muted);padding-top:2px;padding-bottom:2px;border-bottom:0}
+tr.exp td.l{padding-left:18px}
+tr.exp.dl td{font-weight:600;border-bottom:1px solid var(--line);padding-bottom:7px}
+tr.exp.dl td.up{color:var(--up)} tr.exp.dl td.down{color:var(--down)}
 .type{display:inline-block;font-size:11.5px;padding:1px 6px;border-radius:4px;background:var(--soft);border:1px solid var(--line);font-weight:500}
 .type.STD{border-color:var(--h2)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);
@@ -105,7 +110,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
 <header>
   <svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#e8741e"/><path d="M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z" fill="#fff3e0"/><path d="M14 38h36l-5 17H19z" fill="#fff"/><path d="M18 44h28" stroke="#e8741e" stroke-width="3"/></svg>
   <div>
-    <h1>LOI correction factor preview <span class="ver">v2</span></h1>
+    <h1>LOI correction factor preview <span class="ver">v3</span></h1>
     <p class="sub">Paste the LOI tab from CCLAS, adjust the crucible correction factors, and see how each LOI result moves.</p>
   </div>
 </header>
@@ -149,12 +154,12 @@ footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
   <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
   <footer>
     Each cell shows the recalculated LOI. When it differs from the pasted value, the original and the change are shown underneath.
-    AVG rows are the mean of the matching DUP rows. Copy results gives the full 26-column LOI layout, with the new CF and LOI values, ready to paste into Excel.<br>
+    AVG rows are the mean of the matching DUP rows. ASCRM standards show two extra rows: the expected values (LOI105 target: ASCRM30 1.70, ASCRM32 0.55, ASCRM34 0.80; LOI1000 certified LOI from the ASCRM Certificate of Analysis: 9.24, 2.90, 4.76) and the difference, which updates live as you adjust the CF. Copy results gives the full 26-column LOI layout, with the new CF and LOI values, ready to paste into Excel.<br>
     LOI105 = 100 × (WT105_IN − WT105_OUT − CF105) ÷ M, where M = SW × WT105_IN ÷ (SW + CW).
     LOI425/650/1000 = 100 × (WT105_OUT − WT<sub>t</sub>_OUT − CF<sub>t</sub>) ÷ M × 100 ÷ (100 − LOI105).
   </footer>
 </section>
-<div class="vfoot">LOI correction factor preview v2</div>
+<div class="vfoot">LOI correction factor preview v3</div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -294,12 +299,23 @@ function render(){
       return `<td>${nv.toFixed(4)}${sub}</td>`;
     }).join('');
     const t=esc(r.type);
-    return `<tr class="${cls}"><td class="l">${t?`<span class="type ${t}">${t}</span>`:''}</td><td class="l">${esc(r.ident)}${x.avg&&x.has?` <span class="muted">(${x.dupN} DUP)</span>`:''}</td>${cells}</tr>`;
+    let out=`<tr class="${cls}"><td class="l">${t?`<span class="type ${t}">${t}</span>`:''}</td><td class="l">${esc(r.ident)}${x.avg&&x.has?` <span class="muted">(${x.dupN} DUP)</span>`:''}</td>${cells}</tr>`;
+    const tg=stdTarget(r);
+    if(tg&&x.has){
+      out=out.replace('<tr class="','<tr class="hasexp ');
+      out+=`<tr class="exp"><td></td><td class="l">Expected <span class="muted">${tg.key}</span></td>`+tg.v.map(v=>`<td>${ok(v)?v.toFixed(2):''}</td>`).join('')+`</tr>`;
+      out+=`<tr class="exp dl"><td></td><td class="l">Difference</td>`+tg.v.map((v,i)=>{ if(!ok(v)||!ok(x.nw[i])) return '<td></td>'; const d=x.nw[i]-v;
+        return `<td class="${d>0?'up':d<0?'down':''}">${d>0?'+':d<0?'−':''}${Math.abs(d).toFixed(4)}</td>`; }).join('')+`</tr>`;
+    }
+    return out;
   }).join('');
   $('tbl').querySelector('tbody').innerHTML=body||`<tr><td class="l muted" colspan="6">No rows with weights. Tick "Show rows without weights" to see all rows.</td></tr>`;
   lastRes=res;
 }
 let lastRes=null;
+// Expected values for STD rows: LOI105 target, and LOI1000 = certified LOI from the ASCRM Certificate of Analysis
+const STD_TARGETS={ASCRM30:[1.70,NaN,NaN,9.24],ASCRM32:[0.55,NaN,NaN,2.90],ASCRM34:[0.80,NaN,NaN,4.76]};
+function stdTarget(r){ const k=String(r.ident||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^(ASCRM)0*(\d+)$/,'$1$2'); return STD_TARGETS[k]?{key:k,v:STD_TARGETS[k]}:null; }
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function load(text){
