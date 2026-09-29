@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LOI Correction Factor Preview v3</title>
+<title>LOI Correction Factor Preview v4</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23e8741e'/%3E%3Cpath d='M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z' fill='%23fff3e0'/%3E%3Cpath d='M14 38h36l-5 17H19z' fill='%23fff' /%3E%3Cpath d='M18 44h28' stroke='%23e8741e' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23e8741e'/%3E%3Cpath d='M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z' fill='%23fff3e0'/%3E%3Cpath d='M14 38h36l-5 17H19z' fill='%23fff'/%3E%3Cpath d='M18 44h28' stroke='%23e8741e' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -99,6 +99,10 @@ tr.exp.dl td.up{color:var(--up)} tr.exp.dl td.down{color:var(--down)}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);
   padding:8px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
+.drop{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:14px;padding:14px;border:2px dashed var(--line);border-radius:9px}
+.drop.over{border-color:var(--brand);background:var(--soft)}
+.filebtn{font-size:14px;border-radius:7px;border:1px solid var(--brand);background:var(--brand);color:#fff;font-weight:600;padding:7px 13px;cursor:pointer}
+.filebtn:focus-within{outline:2px solid var(--brand);outline-offset:2px}
 .chk{display:flex;gap:6px;align-items:center;font-size:13.5px;color:var(--muted)}
 footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
 @media (max-width:760px){.stages{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -110,7 +114,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
 <header>
   <svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#e8741e"/><path d="M32 9c4 7 11 10 11 19a11 11 0 0 1-22 0c0-5 3-8 5-11 1 4 3 6 5 6-1-6 0-10 1-14z" fill="#fff3e0"/><path d="M14 38h36l-5 17H19z" fill="#fff"/><path d="M18 44h28" stroke="#e8741e" stroke-width="3"/></svg>
   <div>
-    <h1>LOI correction factor preview <span class="ver">v3</span></h1>
+    <h1>LOI correction factor preview <span class="ver">v4</span></h1>
     <p class="sub">Paste the LOI tab from CCLAS, adjust the crucible correction factors, and see how each LOI result moves.</p>
   </div>
 </header>
@@ -122,6 +126,10 @@ footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
     <button class="primary" id="loadBtn">Load data</button>
     <button id="exampleBtn">Load example (35280 JMBF)</button>
     <span class="muted">Expected columns: IDENT … WT105_IN–WT1000_OUT, CF105–CF1000, LOI105–LOI1000</span>
+  </div>
+  <div class="drop" id="drop">
+    <div><b>Or upload LOI .csv files</b><br><span class="muted">Select or drop the instrument CSV files for a job (e.g. 26092901-Chem_A-1_1…csv and ASCRM34…csv), all together.</span></div>
+    <label class="filebtn">Choose .csv files<input type="file" id="csvIn" accept=".csv,.CSV" multiple hidden></label>
   </div>
   <div class="err" id="err"></div>
 </section>
@@ -159,7 +167,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:8px;line-height:1.6}
     LOI425/650/1000 = 100 × (WT105_OUT − WT<sub>t</sub>_OUT − CF<sub>t</sub>) ÷ M × 100 ÷ (100 − LOI105).
   </footer>
 </section>
-<div class="vfoot">LOI correction factor preview v3</div>
+<div class="vfoot">LOI correction factor preview v4</div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -318,7 +326,7 @@ const STD_TARGETS={ASCRM30:[1.70,NaN,NaN,9.24],ASCRM32:[0.55,NaN,NaN,2.90],ASCRM
 function stdTarget(r){ const k=String(r.ident||'').toUpperCase().replace(/[^A-Z0-9]/g,'').replace(/^(ASCRM)0*(\d+)$/,'$1$2'); return STD_TARGETS[k]?{key:k,v:STD_TARGETS[k]}:null; }
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-function load(text){
+function load(text,note){
   $('err').textContent='';
   try{ rows=parse(text); }catch(e){ $('err').textContent=e.message; return; }
   const src=rows.find(r=>CF_KEYS.every(k=>ok(r.n[k])));
@@ -329,7 +337,7 @@ function load(text){
   $('cfWarn').textContent=diff?`${diff} row(s) were pasted with different CF values from the first row. The preview applies one CF per column to every row, so those rows will show a change even before you adjust anything.`:'';
   if(!src){ $('cfWarn').classList.remove('hidden'); $('cfWarn').textContent='No CF values found in the pasted data, so all four start at 0.0000.'; }
   const nW=rows.filter(r=>!isAvg(r)&&calc(r,cf)).length;
-  $('loadedInfo').innerHTML=`<b>${rows.length}</b> rows loaded, <b>${nW}</b> with weights, <b>${rows.filter(isAvg).length}</b> AVG rows`;
+  $('loadedInfo').innerHTML=(note?note+' ':'')+`<b>${rows.length}</b> rows, <b>${nW}</b> with weights, <b>${rows.filter(isAvg).length}</b> AVG rows`;
   ['pastePanel'].forEach(id=>$(id).classList.add('hidden'));
   ['loadedPanel','cfPanel','resultsPanel'].forEach(id=>$(id).classList.remove('hidden'));
   buildStages(); render();
@@ -358,6 +366,57 @@ async function copy(text){
 let tt; function toast(m){const t=$('toast'); t.textContent=m; t.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('on'),2200);}
 
 $('loadBtn').onclick=()=>load($('paste').value);
+
+// ---------- LOI instrument .csv upload ----------
+// One sample per file, ';' separated, no header:
+// 0 sample id | 1 run stamp | 2 sample wt | 3 crucible wt | 4 crucible no | 5-12 WT105_IN…WT1000_OUT | 13-16 CF105…CF1000 | 17-20 crucible names | 21-24 blank crucible wts | 25 flag
+function csvRecords(name,text){
+  const out=[];
+  text.replace(/\r/g,'').split('\n').filter(l=>l.trim()).forEach(l=>{
+    const f=l.split(l.includes(';')?';':',').map(s=>s.trim());
+    if(f.length<17||!ok(num(f[2]))||!ok(num(f[5]))) throw new Error(`${name} doesn't look like an LOI instrument file (expected ';' separated weights and CF values).`);
+    out.push(f);
+  });
+  return out;
+}
+function csvToTSV(recs){
+  const L=letter=>String.fromCharCode(64+(+letter||1));
+  const items=recs.map(f=>{
+    const id=f[0]; const m=id.match(/^([^-]+)-(.+)$/); const job=m?m[1]:''; let rest=(m?m[2]:id).replace(/^Chem[_ ]/i,'');
+    const n={'SAMPLE WEIGHT':num(f[2]),'CRUCIBLE WEIGHT':num(f[3]),WT105_IN:num(f[5]),WT105_OUT:num(f[6]),WT425_OUT:num(f[8]),WT650_OUT:num(f[10]),WT1000_OUT:num(f[12])};
+    const k=calc({n},[13,14,15,16].map(i=>num(f[i])));
+    let ident,type,base=null;
+    if(/^ASCRM/i.test(rest)){ ident=rest; type='STD'; }
+    else { const rm=rest.match(/^(.*)\/(\d+)$/); if(rm){ base=`${job} ${rm[1]}`.trim(); ident=`${base} DUP ${L(rm[2])}`; type='DUP'; } else { ident=`${job} ${rest}`.trim(); type='UNK'; } }
+    const c=COLS.map(()=>''); c[0]=f[1]; c[1]=type; c[2]=ident; c[3]=job;
+    c[7]=String(num(f[2])); c[8]=String(num(f[3])); c[9]=f[4];
+    for(let i=0;i<8;i++) c[10+i]=f[5+i];
+    for(let i=0;i<4;i++) c[18+i]=f[13+i];
+    if(k) k.loi.forEach((v,i)=>c[22+i]=ok(v)?v.toFixed(4):'');
+    return {c,type,base,ident};
+  });
+  const lines=[COLS.map((c,i)=>i<2?'':c).join('\t')];
+  items.filter(x=>x.type==='STD').sort((a,b)=>a.ident.localeCompare(b.ident)).forEach(x=>lines.push(x.c.join('\t')));
+  const groups=new Map(); items.filter(x=>x.type!=='STD').forEach(x=>{ const g=x.base||x.ident; if(!groups.has(g)) groups.set(g,[]); groups.get(g).push(x); });
+  [...groups.keys()].sort().forEach(g=>{ const list=groups.get(g).sort((a,b)=>a.ident.localeCompare(b.ident));
+    if(list.length>1&&list[0].base){ const a=COLS.map(()=>''); a[1]='UNK'; a[2]=`${g} AVG`; a[3]=list[0].c[3]; lines.push(a.join('\t')); }
+    list.forEach(x=>lines.push(x.c.join('\t'))); });
+  return lines.join('\n');
+}
+async function handleCsvFiles(list){
+  $('err').textContent='';
+  const files=[...list].filter(f=>/\.csv$/i.test(f.name));
+  if(!files.length){ $('err').textContent='No .csv files found in that selection.'; return; }
+  try{
+    const recs=(await Promise.all(files.map(async f=>csvRecords(f.name,await f.text())))).flat();
+    load(csvToTSV(recs),`From <b>${files.length}</b> .csv file${files.length>1?'s':''}: LOI calculated with each file's own CF values, used as the original for comparison.`);
+  }catch(e){ $('err').textContent=e.message; }
+}
+$('csvIn').addEventListener('change',e=>{ handleCsvFiles(e.target.files); e.target.value=''; });
+['dragenter','dragover'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault(); $('drop').classList.add('over');}));
+['dragleave','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault(); $('drop').classList.remove('over');}));
+$('drop').addEventListener('drop',e=>handleCsvFiles(e.dataTransfer.files));
+window.__handleCsvFiles=handleCsvFiles;
 $('exampleBtn').onclick=()=>{ $('paste').value=EXAMPLE; load(EXAMPLE); };
 $('paste').addEventListener('paste',()=>setTimeout(()=>load($('paste').value),0));
 $('repasteBtn').onclick=()=>{ $('pastePanel').classList.remove('hidden'); ['loadedPanel','cfPanel','resultsPanel'].forEach(id=>$(id).classList.add('hidden')); $('paste').value=''; $('paste').focus(); };
